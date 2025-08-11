@@ -94,6 +94,9 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
           echo "Synthesizing CDK stacks..."
+          # Create cache directory with proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
           poetry run cdk synth --all
           
       - name: CDK Deploy
@@ -104,6 +107,9 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
           echo "Deploying all team stacks..."
+          # Ensure cache directory has proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
           poetry run cdk deploy --all --require-approval never
           
       - name: Comment on PR with deployment status
