@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "third-party-modules"
+version = "0.1.0"
+description = "Scalestack third-party modules repository with dynamic multi-team support"
+authors = ["Your Team <team@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+scalestack_sdk = {version = "*", source = "scalestack"}
+
+[tool.poetry.group.dev.dependencies]
+scalestack_architecture = {version = "*", source = "scalestack"}
+
+[[tool.poetry.source]]
+name = "scalestack"
+url = "https://artifacts.scalestack.me/api/packages/scalestack/pypi/simple/"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
