@@ -8,8 +8,8 @@ This repository is configured with GitHub Actions to automatically deploy your m
 
 1. **Develop your module** in a feature branch
 2. **Create a PR to main** - automatically triggers deployment to staging
-3. **Test in staging** environment
-4. **Register your module** in the Scalestack workbench
+3. **Register your module** in the Scalestack workbench
+4. **Test in staging** environment
 5. **Merge to main** when ready
 
 The platform uses an Orchestrator Service with Amazon SQS to queue module execution commands, dispatched via Amazon SNS to individual module queues. The `scalestack_sdk` library simplifies input/output handling for modules.
