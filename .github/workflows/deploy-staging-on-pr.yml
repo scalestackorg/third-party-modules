@@ -127,7 +127,7 @@ jobs:
             **PR:** #${{ github.event.pull_request.number }}
             **Commit:** \`${{ github.sha }}\`
             
-            You can now test your modules in the [Staging Workbench](https://staging.scalestack.ai/workbench).`;
+            You can now register your modules in the [Staging Workbench](https://staging.scalestack.ai/workbench).`;
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
