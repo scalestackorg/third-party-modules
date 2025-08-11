@@ -1,6 +1,6 @@
 {
   "module_id": "test_sum",
-  "lambda_name": "modules-test-newstg-test-sum",
+  "lambda_name": "modules-test_newstg_test-sum",
   "category": "enrich",
   "label": "Sum Calculator",
   "description": "A simple module that calculates the sum of two integers",
