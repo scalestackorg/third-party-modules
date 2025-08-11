@@ -50,6 +50,7 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
+          poetry self add poetry-plugin-export
           poetry install --no-interaction --no-root
           
       - name: Export requirements for Lambda modules
