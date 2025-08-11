@@ -284,7 +284,7 @@ Create a JSON file to define the module’s UI components and backend integratio
 ```python
 {
   "module_id": "job_posting_enrichment",
-  "lambda_name": "scalestack_modules_job_posting", #The lambda name will be f"{self.prefix}_{self.stage}_{name}"
+  "lambda_name": "modules-jobposting_newstg_job_posting", # Format: modules-{team}_{stage}_{module_name}
   "category": "enrich",
   "label": "Get Job Postings",
   "description": "Find relevant jobs related to a company",
@@ -383,7 +383,7 @@ Create a JSON file to define the module’s UI components and backend integratio
 ```json
 {
   "module_id": "hello_world",
-  "lambda_name": "hello-world-module_newstg_hello_world",
+  "lambda_name": "modules-helloworld_newstg_hello_world",
   "category": "enrich",
   "label": "Hello World",
   "description": "A simple module that greets the user",
@@ -420,7 +420,7 @@ Create a JSON file to define the module’s UI components and backend integratio
 
 - **Fields**:
   - `module_id`: Unique module identifier.
-  - `lambda_name`: Name of the deployed Lambda function.
+  - `lambda_name`: Name of the deployed Lambda function. **Important**: Use the format `modules-{team}_{stage}_{module_name}` (note the hyphen after "modules" and underscores elsewhere). Example: `modules-test_newstg_test-sum`
   - `category`: UI category (e.g., `enrich`, `ai`, `score`).
   - `label`: UI display name.
   - `description`: UI description.

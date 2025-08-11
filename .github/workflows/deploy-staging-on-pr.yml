@@ -50,6 +50,7 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
+          poetry self add poetry-plugin-export
           poetry install --no-interaction --no-root
           
       - name: Export requirements for Lambda modules
@@ -93,6 +94,9 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
           echo "Synthesizing CDK stacks..."
+          # Create cache directory with proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
           poetry run cdk synth --all
           
       - name: CDK Deploy
@@ -103,6 +107,9 @@ jobs:
           POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
         run: |
           echo "Deploying all team stacks..."
+          # Ensure cache directory has proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
           poetry run cdk deploy --all --require-approval never
           
       - name: Comment on PR with deployment status
@@ -120,7 +127,7 @@ jobs:
             **PR:** #${{ github.event.pull_request.number }}
             **Commit:** \`${{ github.sha }}\`
             
-            You can now test your modules in the [Staging Workbench](https://staging.scalestack.ai/workbench).`;
+            You can now register your modules in the [Staging Workbench](https://staging.scalestack.ai/workbench).`;
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,

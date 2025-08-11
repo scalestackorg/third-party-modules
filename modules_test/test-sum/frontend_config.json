@@ -1,0 +1,37 @@
+{
+  "module_id": "test_sum",
+  "lambda_name": "modules-test_newstg_test-sum",
+  "category": "enrich",
+  "label": "Sum Calculator",
+  "description": "A simple module that calculates the sum of two integers",
+  "api_key_required": false,
+  "parameters": {
+    "user_inputs": [
+      {
+        "id": "first_number",
+        "label": "First Number",
+        "component": "text_field",
+        "type": "number",
+        "placeholder": "Enter the first number",
+        "help_text": "The first integer to add"
+      },
+      {
+        "id": "second_number",
+        "label": "Second Number",
+        "component": "text_field",
+        "type": "number",
+        "placeholder": "Enter the second number",
+        "help_text": "The second integer to add"
+      }
+    ],
+    "outputs": {
+      "component": "checkbox_field_list",
+      "options": [
+        {
+          "value": "sum",
+          "description": "The sum of the two input numbers"
+        }
+      ]
+    }
+  }
+}
