@@ -74,7 +74,7 @@ class DynamicTeamStack(Stack):
                     name=module_name,
                     handler="main",
                     index="index",
-                    folder=str(module_dir.relative(Path.cwd())),
+                    folder=str(module_dir.relative_to(Path.cwd())),
                 )
                 
                 # Create CloudFormation output
