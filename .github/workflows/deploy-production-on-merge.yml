@@ -1,0 +1,150 @@
+name: Deploy to Production on Merge
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Configure Poetry for Scalestack artifacts
+        run: |
+          poetry source add --priority=supplemental scalestack https://artifacts.scalestack.me/api/packages/scalestack/pypi/simple/
+          
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-poetry-
+            
+      - name: Install dependencies
+        env:
+          POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
+          POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
+        run: |
+          poetry self add poetry-plugin-export
+          poetry install --no-interaction --no-root
+          
+      - name: Export requirements for Lambda modules
+        env:
+          POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
+          POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
+        run: |
+          # Find all module directories in team folders and export requirements
+          for team_dir in modules_*/; do
+            if [ -d "$team_dir" ]; then
+              echo "Processing team directory: $team_dir"
+              for module_dir in "$team_dir"*/; do
+                if [ -f "$module_dir/index.py" ]; then
+                  echo "  Exporting requirements for $module_dir"
+                  poetry export --output "$module_dir/requirements.txt" --without-hashes
+                fi
+              done
+            fi
+          done
+          
+      - name: Setup Node.js for AWS CDK
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          
+      - name: CDK Synth
+        env:
+          STAGE: prod
+          AWS_REGION: us-east-1
+          POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
+          POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
+        run: |
+          echo "Synthesizing CDK stacks..."
+          # Create cache directory with proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
+          poetry run cdk synth --all
+          
+      - name: CDK Deploy
+        env:
+          STAGE: prod
+          AWS_REGION: us-east-1
+          POETRY_HTTP_BASIC_SCALESTACK_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_USERNAME }}
+          POETRY_HTTP_BASIC_SCALESTACK_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_SCALESTACK_PASSWORD }}
+        run: |
+          echo "Deploying all team stacks..."
+          # Ensure cache directory has proper permissions for Docker
+          sudo mkdir -p /tmp/uv_cache
+          sudo chmod 777 /tmp/uv_cache
+          poetry run cdk deploy --all --require-approval never
+          
+      - name: Comment on commit with deployment status
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### ✅ Deployment to Production Successful
+            
+            Your changes have been deployed to the production environment.
+            
+            **Environment:** \`prod\`
+            **Region:** \`us-east-1\`
+            **Commit:** \`${{ github.sha }}\`
+            
+            You can now register your modules in the [Production Workbench](https://platform.scalestack.ai/workbench).`;
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: output
+            });
+            
+      - name: Comment on commit with deployment failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### ❌ Deployment to Production Failed
+            
+            The deployment to production environment has failed.
+            
+            **Commit:** \`${{ github.sha }}\`
+            
+            Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.`;
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: output
+            });

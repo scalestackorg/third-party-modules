@@ -25,7 +25,7 @@ The platform uses an Orchestrator Service with Amazon SQS to queue module execut
 ## Quick Start
 
 ### Prerequisites
-1. Clone this repository and create a new feature branch:
+1. Clone this repository and **Create a new branch**:
 ```bash
 git clone https://github.com/scalestackorg/third-party-modules
 cd third-party-modules
@@ -34,9 +34,14 @@ git checkout -b feature/team-name/module-name
 
 2. Ensure Poetry is installed and the project is initialized:
 ```bash
-poetry env use python3.12
-poetry install
-poetry shell
+export POETRY_HTTP_BASIC_SCALESTACK_USERNAME="buplex"
+export POETRY_HTTP_BASIC_SCALESTACK_PASSWORD="jrh-bxq0aur6HDB8vjn"
+```
+
+```bash
+    poetry env use python3.12
+    poetry install
+    poetry shell
 ```
 
 ## 1. Developing a Module in This Repository
@@ -229,9 +234,13 @@ When you create or update a PR:
   - Review the PR comment for deployment confirmation
   - If deployment fails, check the logs for errors
 
+> **⚠️ Important:** Every time you push a new commit to your open PR, the module will automatically re-deploy to staging. This enables rapid iteration and testing. The deployment status will be updated in the PR comments after each push.
+
 ## 3. Registering Your Deployed Module
 
 After your module is successfully deployed to staging via the GitHub Actions pipeline, register it for frontend integration.
+
+**💡 Tip:** We strongly recommend to ask Claude Code to create the registration JSON and save it in a .json file
 
 ### JSON Structure
 
@@ -400,8 +409,8 @@ After your PR deployment succeeds (check the PR comment for confirmation):
   ```
 
 2. **Create and Register Your Module**:
-  - Click "Create New Module"
-  - Import your JSON configuration
+  - Select "Create New Module"
+  - Import your JSON configuration ('JSON' button on the top left corner)
   - The lambda_name should match what was deployed (check PR comments or AWS console)
   - Click "Publish" to complete registration
 
@@ -418,7 +427,6 @@ After your PR deployment succeeds (check the PR comment for confirmation):
 
 5. **Production Deployment** (when ready):
   - After testing in staging, wait for approval and Scalestack's team will merge your PR to main
-  - Follow your organization's process for production deployment
   - Register the module in production workbench: `https://platform.scalestack.ai/workbench`
 
 ## Repository Structure
