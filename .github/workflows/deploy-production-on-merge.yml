@@ -13,7 +13,7 @@ jobs:
     # Required for OIDC
     permissions:
       id-token: write
-      contents: read
+      contents: write  # Changed from read to write for commit comments
     
     steps:
       - name: Checkout code
