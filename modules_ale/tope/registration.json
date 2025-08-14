@@ -1,0 +1,26 @@
+{
+  "module_id": "tope_attenzione",
+  "lambda_name": "modules-ale_newstg_tope",
+  "category": "enrich",
+  "label": "Tope - Attenzione",
+  "description": "Returns ATTENZIONE!!! for any input",
+  "api_key_required": false,
+  "parameters": {
+    "enrichment_inputs": [
+      {
+        "id": "input_data",
+        "component": "dropdown",
+        "label": "Input Data"
+      }
+    ],
+    "outputs": {
+      "component": "checkbox_field_list",
+      "options": [
+        {
+          "value": "response",
+          "description": "Always returns ATTENZIONE!!!"
+        }
+      ]
+    }
+  }
+}
