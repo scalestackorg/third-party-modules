@@ -10,7 +10,6 @@ from pathlib import Path
 from aws_cdk import App, CfnOutput, Stack, Tags
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
-from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
 from scalestack_architecture import PythonLambdaFactory
 
@@ -99,21 +98,48 @@ class DynamicTeamStack(Stack):
             iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
         )
         
-        # Add custom policy with restricted permissions
+        # Add CloudWatch Logs permissions (needed for Lambda execution)
         role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    # SQS permissions
-                    "sqs:*",
-                    # SSM permissions
-                    "ssm:*",
-                    # CloudWatch Logs permissions (extended)
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
+                    "logs:PutLogEvents",
                     "logs:DescribeLogGroups",
                     "logs:DescribeLogStreams",
-                    "logs:PutLogEvents",
+                ],
+                resources=["*"],
+            )
+        )
+        
+        # Add SQS permissions - only non-destructive actions
+        role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    # Read and process messages (non-destructive)
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:GetQueueUrl",
+                    "sqs:ListQueues",
+                    "sqs:ChangeMessageVisibility",
+                ],
+                resources=["*"],
+            )
+        )
+        
+        # Add SSM permissions - read-only
+        role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    # Read-only access to parameters
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:GetParameterHistory",
+                    "ssm:DescribeParameters",
                 ],
                 resources=["*"],
             )
@@ -138,7 +164,6 @@ class DynamicTeamStack(Stack):
             )
         )
         
-        print(f"  🔐 Created custom IAM role with restricted Secrets Manager access")
         return role
     
     def _deploy_team_modules(self):

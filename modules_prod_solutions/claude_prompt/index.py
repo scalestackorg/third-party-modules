@@ -131,7 +131,7 @@ def main(
         try:
             error_data = e.response.json()
             error_msg = f"{error_msg} - {error_data.get('error', {}).get('message', '')}"
-        except:
+        except:  # noqa: E722
             pass
         logger.error("HTTP error from Claude", error=error_msg, status_code=e.response.status_code)
         return {"error": error_msg}
