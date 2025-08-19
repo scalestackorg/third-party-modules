@@ -2,6 +2,7 @@
 """
 Fully dynamic CDK stack that automatically creates a separate stack for each team directory.
 No CDK modifications needed - just create a modules_<teamname>/ directory and deploy!
+TESTING PROTECTION
 """
 
 import os
