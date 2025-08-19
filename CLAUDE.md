@@ -4,7 +4,7 @@
 
 This guide provides detailed steps for developing, deploying, and registering modules on the Scalestack platform using this repository's automated CI/CD pipeline.
 
-**💡 Tip:** This guide is structured to work seamlessly with AI coding assistants like Claude Code or Cursor.
+**🚀 Start Building Now:** Open this repo in Claude Code or Cursor → Ask the AI to create your module → It will follow this guide automatically!
 
 ## Overview
 

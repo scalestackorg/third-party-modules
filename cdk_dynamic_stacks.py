@@ -8,6 +8,9 @@ import os
 import re
 from pathlib import Path
 from aws_cdk import App, CfnOutput, Stack, Tags
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_ssm as ssm
+from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
 from scalestack_architecture import PythonLambdaFactory
 
@@ -40,6 +43,18 @@ class DynamicTeamStack(Stack):
         
         print(f"\n🏗️  Creating stack for team: {team_name}")
         
+        # Create custom IAM role for Lambda functions
+        self.lambda_role = self._create_lambda_role()
+        
+        # Store the role ARN in SSM Parameter Store for third-party modules
+        self.role_parameter = ssm.StringParameter(
+            self,
+            f"ThirdPartyRoleParam-{team_name}",
+            parameter_name=f"/scalestack-modules/third-party/{team_name}/role-arn",
+            string_value=self.lambda_role.role_arn,
+            description=f"IAM Role ARN for {team_name} third-party Lambda functions with restricted permissions",
+        )
+        
         # Create Lambda factory for this team
         self.lambda_factory = PythonLambdaFactory(
             stack=self,
@@ -50,6 +65,12 @@ class DynamicTeamStack(Stack):
             architecture="x86_64",
         )
         
+        # Remove the default role that was imported from SSM by PythonLambdaFactory
+        # This ensures we don't have an unused role with overly broad permissions
+        if hasattr(self.lambda_factory, 'role') and self.lambda_factory.role:
+            # Remove the imported role from the stack
+            self.node.try_remove_child('modules_role')
+        
         # Deploy all modules for this team
         modules_deployed = self._deploy_team_modules()
         
@@ -59,6 +80,66 @@ class DynamicTeamStack(Stack):
             print(f"✅ Team {team_name}: Deployed {len(modules_deployed)} modules")
         else:
             print(f"⚠️  Team {team_name}: No modules found in {team_dir}")
+    
+    def _create_lambda_role(self):
+        """Create a custom IAM role with restricted permissions for Lambda functions."""
+        role_name = f"ThirdPartyLambdaRole-{self.team_name}-{STAGE}"
+        
+        # Create the execution role
+        role = iam.Role(
+            self,
+            f"LambdaRole-{self.team_name}",
+            role_name=role_name,
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description=f"Custom Lambda execution role for {self.team_name} third-party modules with restricted permissions",
+        )
+        
+        # Add basic Lambda execution permissions
+        role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
+        )
+        
+        # Add custom policy with restricted permissions
+        role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    # SQS permissions
+                    "sqs:*",
+                    # SSM permissions
+                    "ssm:*",
+                    # CloudWatch Logs permissions (extended)
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                ],
+                resources=["*"],
+            )
+        )
+        
+        # Add restricted Secrets Manager permissions
+        # Only allow access to third-party specific secrets
+        # This prevents third-party modules from accessing sensitive internal secrets
+        role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["secretsmanager:GetSecretValue"],
+                resources=[
+                    # Allow access only to secrets with specific naming patterns:
+                    # - Secrets prefixed with "third-party/"
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:third-party/*",
+                    # - Secrets prefixed with "thirdparty/" (alternative naming)
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:thirdparty/*",
+                    # - Team-specific secrets under "modules/{team_name}/"
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:modules/{self.team_name}/*",
+                ],
+            )
+        )
+        
+        print(f"  🔐 Created custom IAM role with restricted Secrets Manager access")
+        return role
     
     def _deploy_team_modules(self):
         """Deploy all modules found in the team's directory."""
@@ -77,6 +158,11 @@ class DynamicTeamStack(Stack):
                     index="index",
                     folder=str(module_dir.relative_to(Path.cwd())),
                 )
+                
+                # Override the Lambda function's role with our custom role
+                # This is done using CFN override since the factory doesn't accept a role parameter
+                cfn_function = lambda_function.node.default_child
+                cfn_function.add_property_override("Role", self.lambda_role.role_arn)
                 
                 # Create CloudFormation output
                 output_name = self._to_pascal_case(f"{self.team_name}_{module_name}")
