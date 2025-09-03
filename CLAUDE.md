@@ -415,11 +415,19 @@ After your PR deployment succeeds (check the PR comment for confirmation):
   - Click "Publish" to complete registration
 
 3. **If your module requires API keys** (`api_key_required: true`):
-- On the workbench, click on register service and select **"Third Party developers"**
-- Register the API key to the service "Third Party developers" in the Settings -> Integrations tab
-- Name your API key using the format: `<provider_name>_<teamname>`
-  - Example: `openai_teamalpha` or `stripe_analytics_team`
-- Configure the API key value in the service settings
+  
+  **Option 1: Using an existing service**
+  - Check if the service for your API key already exists in Settings -> Integrations
+  - Common services like OpenAI, Apollo, Anthropic, etc. may already be configured
+  - If the service exists, simply register your API key there
+  
+  **Option 2: Using Third Party Modules service**
+  - If the service for your API key doesn't exist, use the **"Third Party Modules"** service
+  - On the workbench, click on "Register Service" and select **"Third Party Modules"**
+  - Register your API key in the Settings -> Integrations tab under "Third Party Modules"
+  - Configure the API key value in the service settings
+  
+  > **Note:** The "Third Party Modules" service acts as a general-purpose container for API keys that don't have their own dedicated service yet
 
 4. **Test Your Module**:
   - Create a test workflow in the staging workbench

@@ -11,7 +11,7 @@ from aws_cdk import App, CfnOutput, Stack, Tags
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
 from constructs import Construct
-from scalestack_architecture import PythonLambdaFactory
+from scalestack_architecture import PythonLambdaFactory, DatadogFactory
 
 REGION = os.environ.get("AWS_REGION", "us-east-1")
 STAGE = os.environ.get("STAGE", "newstg")
@@ -53,6 +53,9 @@ class DynamicTeamStack(Stack):
             string_value=self.lambda_role.role_arn,
             description=f"IAM Role ARN for {team_name} third-party Lambda functions with restricted permissions",
         )
+
+        self.datadog_factory = DatadogFactory(self, STAGE, "third-party-modules")
+        self.datadog_python = self.datadog_factory.python_monitoring()
         
         # Create Lambda factory for this team
         self.lambda_factory = PythonLambdaFactory(
@@ -62,8 +65,10 @@ class DynamicTeamStack(Stack):
             stage=STAGE,
             python_version="3.12",
             architecture="x86_64",
+            monitoring=self.datadog_python,
         )
-        
+
+        self.lambda_factory.add_monitoring()
         # Remove the default role that was imported from SSM by PythonLambdaFactory
         # This ensures we don't have an unused role with overly broad permissions
         if hasattr(self.lambda_factory, 'role') and self.lambda_factory.role:
