@@ -1,0 +1,79 @@
+{
+  "module_id": "perplexity_ai",
+  "lambda_name": "modules-prod_solutions_newstg_perplexity",
+  "category": "ai",
+  "label": "Perplexity AI",
+  "description": "Query Perplexity AI models with custom prompts and settings",
+  "api_key_required": true,
+  "parameters": {
+    "enrichment_inputs": [
+      {
+        "id": "prompt",
+        "component": "dropdown",
+        "label": "Prompt"
+      }
+    ],
+    "user_inputs": [
+      {
+        "id": "temperature",
+        "component": "dropdown",
+        "label": "Temperature (Creativity)",
+        "options": [
+          { "value": 0.0, "label": "0.0 - Most Focused" },
+          { "value": 0.2, "label": "0.2 - Very Focused (Default)" },
+          { "value": 0.4, "label": "0.4 - Focused" },
+          { "value": 0.6, "label": "0.6 - Balanced" },
+          { "value": 0.8, "label": "0.8 - Creative" },
+          { "value": 1.0, "label": "1.0 - Very Creative" },
+          { "value": 1.2, "label": "1.2 - More Creative" },
+          { "value": 1.5, "label": "1.5 - Highly Creative" },
+          { "value": 2.0, "label": "2.0 - Maximum Creativity" }
+        ]
+      },
+      {
+        "id": "model",
+        "component": "dropdown",
+        "label": "Model",
+        "options": [
+          { 
+            "value": "sonar", 
+            "label": "Sonar - Lightweight & Fast" 
+          },
+          { 
+            "value": "sonar-pro", 
+            "label": "Sonar Pro - Enhanced Performance" 
+          },
+          { 
+            "value": "sonar-deep-research", 
+            "label": "Sonar Deep Research - Comprehensive Research" 
+          },
+          { 
+            "value": "sonar-reasoning", 
+            "label": "Sonar Reasoning - Problem Solving" 
+          },
+          { 
+            "value": "sonar-reasoning-pro", 
+            "label": "Sonar Reasoning Pro - Advanced Problem Solving" 
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "component": "checkbox_field_list",
+      "options": [
+        {
+          "value": "response",
+          "description": "The AI-generated response from Perplexity based on the prompt and settings."
+        },
+        {
+          "value": "model_used",
+          "description": "The specific Perplexity model that was used to generate the response."
+        },
+        {
+          "value": "total_tokens",
+          "description": "The total number of tokens consumed by this request (prompt + completion)."
+        }
+      ]
+    }
+  }
+}
