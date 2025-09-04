@@ -8,7 +8,7 @@ PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions"
 HEADERS = {"Content-Type": "application/json"}
 logger = get_logger()
 
-@decorators.aws(default_secret="PERPLEXITY_API_KEY")
+@decorators.aws
 def main(
     prompt: str,
     temperature: float,

@@ -1,6 +1,6 @@
 {
-  "module_id": "perplexity_ai",
-  "lambda_name": "modules-prod_solutions_newstg_perplexity",
+  "module_id": "perplexity",
+  "lambda_name": "modules-prod_solutions_test_newstg_perplexity",
   "category": "ai",
   "label": "Perplexity AI",
   "description": "Query Perplexity AI models with custom prompts and settings",
