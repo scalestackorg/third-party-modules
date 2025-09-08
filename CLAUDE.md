@@ -98,7 +98,7 @@ APOLLO_URL = "https://api.apollo.io/v1/people/match"
 HEADERS = {"Content-Type": "application/json"}
 logger = get_logger()
 
-@decorators.aws(default_secret="APOLLO_API_KEY")
+@decorators.aws
 def main(email: str, api_key: SecretStr, **kwargs):
     response = requests.post(
         APOLLO_URL,
