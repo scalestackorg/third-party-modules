@@ -78,6 +78,18 @@ class DynamicTeamStack(Stack):
         # Deploy all modules for this team
         modules_deployed = self._deploy_team_modules()
         
+        # Remove any LogRetention resources created at stack level
+        # These can cause conflicts with existing log groups
+        for node in self.node.find_all():
+            if 'LogRetention' in node.node.id:
+                try:
+                    parent = node.node.scope
+                    if parent:
+                        parent.node.try_remove_child(node.node.id)
+                        print(f"  Removed stack-level {node.node.id} to prevent conflicts")
+                except:
+                    pass  # Ignore errors if node cannot be removed
+        
         # Output summary
         if modules_deployed:
             CfnOutput(self, "ModulesDeployed", value=", ".join(modules_deployed))
@@ -197,17 +209,18 @@ class DynamicTeamStack(Stack):
                 cfn_function = lambda_function.node.default_child
                 cfn_function.add_property_override("Role", self.lambda_role.role_arn)
                 
-                # Remove any auto-created LogGroup to prevent conflicts
+                # Remove any auto-created LogGroup and LogRetention to prevent conflicts
                 # The Lambda service will create its own log group on first invocation
-                # Look for LogGroup child nodes and remove them
+                # Look for LogGroup and LogRetention child nodes and remove them
                 children_to_remove = []
                 for child in lambda_function.node.children:
-                    if child.node.id.endswith('LogGroup'):
+                    # Remove both LogGroup and LogRetention constructs
+                    if 'LogGroup' in child.node.id or 'LogRetention' in child.node.id:
                         children_to_remove.append(child.node.id)
                 
                 for child_id in children_to_remove:
                     lambda_function.node.try_remove_child(child_id)
-                    print(f"    Removed LogGroup construct to prevent conflicts")
+                    print(f"    Removed {child_id} construct to prevent conflicts")
                 
                 # Create CloudFormation output
                 output_name = self._to_pascal_case(f"{self.team_name}_{module_name}")
