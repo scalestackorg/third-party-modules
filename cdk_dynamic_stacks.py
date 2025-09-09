@@ -130,6 +130,7 @@ class DynamicTeamStack(Stack):
                     "sqs:GetQueueUrl",
                     "sqs:ListQueues",
                     "sqs:ChangeMessageVisibility",
+                    "sqs:SendMessage",  # Added for sending messages
                 ],
                 resources=["*"],
             )
@@ -165,6 +166,8 @@ class DynamicTeamStack(Stack):
                     f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:thirdparty/*",
                     # - Team-specific secrets under "modules/{team_name}/"
                     f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:modules/{self.team_name}/*",
+                    # - Organization/hackathon secrets
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:organization/anthropic_hackathon-6/*",
                 ],
             )
         )
@@ -193,6 +196,12 @@ class DynamicTeamStack(Stack):
                 # This is done using CFN override since the factory doesn't accept a role parameter
                 cfn_function = lambda_function.node.default_child
                 cfn_function.add_property_override("Role", self.lambda_role.role_arn)
+                
+                # Find and remove any LogGroup resources that might have been created by the factory
+                # This prevents conflicts with existing LogGroups
+                for child in lambda_function.node.children:
+                    if hasattr(child, 'cfn_resource_type') and child.cfn_resource_type == 'AWS::Logs::LogGroup':
+                        lambda_function.node.try_remove_child(child.node.id)
                 
                 # Create CloudFormation output
                 output_name = self._to_pascal_case(f"{self.team_name}_{module_name}")
