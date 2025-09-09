@@ -97,6 +97,17 @@ jobs:
           sudo chmod 777 /tmp/uv_cache
           poetry run cdk synth --all
           
+      - name: Clean up existing LogGroups (if any)
+        continue-on-error: true
+        run: |
+          echo "Cleaning up existing Lambda LogGroups to prevent conflicts..."
+          # Only delete LogGroups for THIS stage (prod) to avoid affecting other environments
+          # The pattern is: /aws/lambda/modules-{team}_prod_{module}
+          for log_group in $(aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/modules-" --query "logGroups[?contains(logGroupName, '_prod_')].logGroupName" --output text); do
+            echo "Deleting log group: $log_group"
+            aws logs delete-log-group --log-group-name "$log_group" 2>/dev/null || true
+          done
+          
       - name: CDK Deploy
         env:
           STAGE: prod
