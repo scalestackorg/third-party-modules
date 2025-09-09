@@ -197,11 +197,17 @@ class DynamicTeamStack(Stack):
                 cfn_function = lambda_function.node.default_child
                 cfn_function.add_property_override("Role", self.lambda_role.role_arn)
                 
-                # Find and remove any LogGroup resources that might have been created by the factory
-                # This prevents conflicts with existing LogGroups
+                # Remove any auto-created LogGroup to prevent conflicts
+                # The Lambda service will create its own log group on first invocation
+                # Look for LogGroup child nodes and remove them
+                children_to_remove = []
                 for child in lambda_function.node.children:
-                    if hasattr(child, 'cfn_resource_type') and child.cfn_resource_type == 'AWS::Logs::LogGroup':
-                        lambda_function.node.try_remove_child(child.node.id)
+                    if child.node.id.endswith('LogGroup'):
+                        children_to_remove.append(child.node.id)
+                
+                for child_id in children_to_remove:
+                    lambda_function.node.try_remove_child(child_id)
+                    print(f"    Removed LogGroup construct to prevent conflicts")
                 
                 # Create CloudFormation output
                 output_name = self._to_pascal_case(f"{self.team_name}_{module_name}")
